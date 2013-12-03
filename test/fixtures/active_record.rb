@@ -6,6 +6,17 @@ ActiveRecord::Base.establish_connection(
 )
 
 ActiveRecord::Schema.define do
+  create_table :venues, force: true do |t|
+    t.string     :slug
+    t.timestamps
+  end
+
+  create_table :events, force: true do |t|
+    t.string     :slug
+    t.belongs_to :venue, index: true
+    t.timestamps
+  end
+
   create_table :ar_posts, force: true do |t|
     t.string     :title
     t.text       :body
@@ -36,6 +47,14 @@ ActiveRecord::Schema.define do
   end
 end
 
+class Event < ActiveRecord::Base
+  belongs_to :venue
+end
+
+class Venue < ActiveRecord::Base
+  has_many :events
+end
+
 class ARPost < ActiveRecord::Base
   has_many :ar_comments, class_name: 'ARComment'
   has_and_belongs_to_many :ar_tags, class_name: 'ARTag', join_table: :ar_posts_tags
@@ -51,6 +70,14 @@ class ARTag < ActiveRecord::Base
 end
 
 class ARSection < ActiveRecord::Base
+end
+
+class EventSerializer < ActiveModel::Serializer
+  has_one :venue, embed_key: :slug
+end
+
+class VenueSerializer < ActiveModel::Serializer
+  has_many :events, embed_key: :slug
 end
 
 class ARPostSerializer < ActiveModel::Serializer
@@ -73,6 +100,11 @@ end
 class ARSectionSerializer < ActiveModel::Serializer
   attributes 'name'
 end
+
+venue = Venue.create(slug: 'salty')
+Event.create(slug: 'ugh', venue: venue)
+Event.create(slug: 'foo', venue: venue)
+Event.create(slug: 'bar', venue: venue)
 
 ARPost.create(title: 'New post',
               body:  'A body!!!',
